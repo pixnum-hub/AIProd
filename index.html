@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AIProd - AI Calculator</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%2300aaff'/><circle cx='30' cy='30' r='5' fill='white'/><circle cx='70' cy='30' r='5' fill='white'/><circle cx='50' cy='70' r='5' fill='white'/><line x1='30' y1='30' x2='70' y2='30' stroke='white' stroke-width='2'/><line x1='30' y1='30' x2='50' y2='70' stroke='white' stroke-width='2'/><line x1='70' y1='30' x2='50' y2='70' stroke='white' stroke-width='2'/></svg>">
+<style>
+:root {
+  --bg: #e0e0e0;
+  --text: #333;
+  --card: #e8e8e8;
+  --shadow-light: rgba(255,255,255,0.7);
+  --shadow-dark: rgba(0,0,0,0.15);
+}
+.dark {
+  --bg: #1c1c1c;
+  --text: #f2f2f2;
+  --card: #2a2a2a;
+  --shadow-light: rgba(255,255,255,0.05);
+  --shadow-dark: rgba(0,0,0,0.5);
+}
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  font-family: Arial, sans-serif;
+  color: var(--text);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+.app-frame {
+  width: 95%;
+  max-width: 480px;
+  background: var(--card);
+  padding: 20px;
+  border-radius: 22px;
+  box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
+  position: relative;
+}
+#darkToggle {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  background: var(--card);
+  box-shadow: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light);
+  font-size: 20px;
+}
+h2 {
+  text-align: center;
+  margin-top: 50px;
+}
+.converter-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+select, input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: inset 4px 4px 10px var(--shadow-dark), inset -4px -4px 10px var(--shadow-light);
+}
+button.calculate {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  margin-top: 10px;
+  background: var(--card);
+  color: var(--text);
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light);
+}
+.result {
+  margin-top: 20px;
+  padding: 15px;
+  background: var(--card);
+  border-radius: 14px;
+  box-shadow: inset 4px 4px 10px var(--shadow-dark), inset -4px -4px 10px var(--shadow-light);
+  min-height: 40px;
+}
+footer {
+  text-align: center;
+  margin-top: 25px;
+  font-size: 14px;
+  opacity: 0.6;
+}
+</style>
+</head>
+<body>
+<div class="app-frame">
+  <button id="darkToggle">🌙</button>
+  <h2>AIProd</h2>
+  <div class="converter-box">
+    <input type="number" id="inputValue" placeholder="Enter value" />
+    <select id="categorySelect"></select>
+    <button class="calculate" onclick="calculateAI()">Calculate</button>
+    <label id="categoryLabel" style="margin-top:10px; font-size:14px; opacity:0.7; text-align:center; display:block;">Select a category</label>
+    <div class="result" id="resultBox">Result will appear here</div>
+  </div>
+  <footer>© Manik Roy 2025. All Rights Reserved.</footer>
+</div>
+<script>
+const toggle = document.getElementById("darkToggle");
+toggle.onclick = () => {
+  document.body.classList.toggle("dark");
+  toggle.textContent = document.body.classList.contains("dark") ? "☀️" : "🌙";
+};
+const categories = {
+  // Original 25 categories
+  "AI FLOPs (tera) → giga": v => v * 1000,
+  "AI FLOPs (giga) → tera": v => v / 1000,
+  "Compute FLOPs → Training Hours": v => v / 3.6e15,
+  "TFLOPs → Tokens/sec capability": v => v * 5000,
+  "Model Params → Size (MB)": v => (v * 4)/1e6,
+  "Model Size (MB) → Params": v => (v*1e6)/4,
+  "Embedding Dim → Params": v => v*1024,
+  "Layers × Heads → Attention Params": v => v*131072,
+  "Seq Length → Memory (MB)": v => v*6,
+  "FP32 → FP16 compression": v => v*0.5,
+  "FP32 → INT8 compression": v => v*0.25,
+  "FP32 → Q4 compression": v => v*0.125,
+  "INT8 → FP16": v => v*2,
+  "FP16 → FP32": v => v*2,
+  "Dataset Size (GB) → Tokens": v => v*50000000,
+  "Training Epochs → Total steps": v => v*1500,
+  "Training Tokens (B) → Compute FLOPs": v => v*6e12,
+  "Steps per second → Tokens per sec": v => v*32,
+  "Training Steps → Days": v => v/86400,
+  "Latency ms → Tokens per sec": v => 1000/v,
+  "Tokens/sec → Latency ms": v => 1000/v,
+  "GPU TFLOPs → sec per 1e12 ops": v => 1/v,
+  "Bandwidth GB/s → Tokens/sec": v => v*15000,
+  "VRAM GB → Max Model Params": v => v*1200000000,
+  "VRAM GB → Max Batch Size": v => v*20,
+  "Activation Size (MB) → Layers": v => v/8,
+  "Context Window → KV Cache MB": v => v*1.6,
+  "Attention Heads → Memory MB": v => v*3,
+  "Optimizer State Size (MB)": v => v*12,
+  "Identity (same value)": v => v,
+  // Additional 25 categories
+  "Activation Function Output (Sigmoid)": v => 1/(1+Math.exp(-v)),
+  "Activation Function Output (Tanh)": v => Math.tanh(v),
+  "Activation Function Output (ReLU)": v => Math.max(0,v),
+  "Activation Function Output (Leaky ReLU)": v => v>0?v:0.01*v,
+  "Softmax Probability": v => Math.exp(v)/(Math.exp(v)+1),
+  "Dropout Effective Neurons": v => v*0.8,
+  "Convolution Output Size": v => v*1, // placeholder formula
+  "Pooling Layer Output Size": v => v*0.5,
+  "CNN Layer Params": v => v*1000,
+  "RNN/LSTM Params": v => v*2000,
+  "Transformer Attention FLOPs": v => v*v*12,
+  "Learning Rate Warmup": v => v*0.1,
+  "Weight Decay Adjustment": v => v*0.99,
+  "Optimizer Momentum Update": v => v*0.9,
+  "BLEU Score Estimation": v => Math.min(v,1),
+  "ROUGE Score Estimation": v => Math.min(v,1),
+  "Perplexity Estimation": v => Math.exp(v),
+  "Embedding Memory (MB)": v => v*4,
+  "Quantization Memory Reduction": v => v*0.25,
+  "Model Sharding Size": v => v/2,
+  "Dataset Split (Train)": v => v*0.7,
+  "Dataset Split (Validation)": v => v*0.2,
+  "Dataset Split (Test)": v => v*0.1,
+  "Token Sequence Time": v => v/1000,
+  "Transformer Head Dimension": v => v/8,
+  "Token Embedding Memory": v => v*2
+};
+const categorySelect = document.getElementById("categorySelect");
+Object.keys(categories).sort().forEach(cat => {
+  const opt = document.createElement("option");
+  opt.value = cat;
+  opt.textContent = cat;
+  categorySelect.appendChild(opt);
+});
+categorySelect.addEventListener("change", () => {
+  document.getElementById("categoryLabel").textContent = categorySelect.value;
+});
+function calculateAI(){
+  const val = Number(document.getElementById("inputValue").value);
+  const cat = categorySelect.value;
+  if(!val){
+    resultBox.textContent="Enter a valid number";
+    return;
+  }
+  const result = categories[cat](val);
+  resultBox.textContent=result.toLocaleString();
+}
+</script>
+</body>
+</html>
